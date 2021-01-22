@@ -180,38 +180,4 @@ jobs:
         with:
           name: Padavan-packages
           path: /opt/images
-      #上传到WeTransfer
-      - name: Upload firmware to WeTransfer
-        id: wetransfer
-        if: steps.organize.outputs.status == 'success'
-        run: |
-          curl -fsSL git.io/file-transfer | sh
-          ./transfer wet  -s -p 16 --no-progress /opt/images/*.trx 2>&1 | tee wetransfer.log
-          echo "::warning file=wetransfer.com::$(cat wetransfer.log | grep https)"
-          echo "DOWNLOADURL2=$(cat wetransfer.log | grep -o -E "https?://[a-zA-Z0-9\.\/_&=@$%?~#-]*")" >> $GITHUB_ENV
-          echo "::set-output name=status::success"
-      #上传到奶牛快传
-      - name: Upload firmware to cowtransfer
-        id: cowtransfer
-        if: steps.wetransfer.outputs.status == 'success'
-        run: |
-          curl -sL https://git.io/cowtransfer | sh
-          ./cowtransfer-uploader -s -p 16 --hash /opt/images/*.trx 2>&1 | tee cowtransfer.log
-          echo "::warning file=cowtransfer.com::$(cat cowtransfer.log | grep https)"
-          echo "DOWNLOADURL=$(cat cowtransfer.log | grep -o -E "https?://[a-zA-Z0-9\.\/_&=@$%?~#-]*")" >> $GITHUB_ENV
-          echo "::set-output name=status::success"
-      - name: Update README.md
-        if: steps.cowtransfer.outputs.status == 'success'
-        run: |
-          git pull origin master
-          sed "42c * 当前最新版本:${FNAME}.${{ steps.current-time.outputs.formattedTime }}.trx  最后编译时间: $(date -u -d '+8 hour' '+%Y-%m-%d %H:%M:%S')  下载地址: [奶牛快传](${DOWNLOADURL})  [WeTransfer](${DOWNLOADURL2})" README.md -i
-          git config user.name  Robot
-          git config user.email github-actions@github.com
-          git commit -m "update README.md" -a
-          git push
-      - name: Remove obsolete firmwares on artifacts
-        uses: c-hive/gha-remove-artifacts@v1.2.0
-        if: always()
-        with:
-          age: '3 day'
-          skip-recent: 5
+   
